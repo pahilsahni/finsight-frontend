@@ -1,0 +1,11 @@
+symbol,company_name,exchange,quantity,average_buy_price
+RELIANCE,Reliance Industries Ltd,NSE,100,2850.00
+TCS,Tata Consultancy Services Ltd,NSE,50,3900.00
+HDFCBANK,HDFC Bank Ltd,NSE,200,1650.00
+INFY,Infosys Ltd,NSE,150,1480.00
+ICICIBANK,ICICI Bank Ltd,NSE,300,1100.00
+BHARTIARTL,Bharti Airtel Ltd,NSE,120,1250.00
+WIPRO,Wipro Ltd,NSE,200,480.00
+LT,Larsen & Toubro Ltd,NSE,80,3600.00
+AXISBANK,Axis Bank Ltd,NSE,180,1150.00
+KOTAKBANK,Kotak Mahindra Bank Ltd,NSE,60,1850.00

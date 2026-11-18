@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Download, FileSpreadsheet, Info, CheckCircle2 } from 'lucide-react';
+import { FileText, Download, Info, CheckCircle2 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { usePortfolioOverview } from '../hooks/usePortfolioOverview';
 import { useHoldings } from '../hooks/useHoldings';
@@ -10,7 +10,7 @@ import { EmptyState } from '../components/common/EmptyState';
 
 export const Reports: React.FC = () => {
   const { selectedPortfolio } = usePortfolio();
-  const { data: overview, loading: overviewLoading } = usePortfolioOverview(selectedPortfolio?.id);
+  const { data: overview } = usePortfolioOverview(selectedPortfolio?.id);
   const { data: holdings, loading: holdingsLoading } = useHoldings(selectedPortfolio?.id);
 
   const [downloadingCsv, setDownloadingCsv] = useState(false);

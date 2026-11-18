@@ -1,12 +1,29 @@
-import { defineConfig, loadEnv } from 'vite';
+﻿import { defineConfig, loadEnv, Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import fs from 'fs';
+
+function copy404Plugin(): Plugin {
+  return {
+    name: 'copy-404',
+    apply: 'build',
+    closeBundle() {
+      const dist = path.resolve(__dirname, 'dist');
+      const src = path.join(dist, 'index.html');
+      const dest = path.join(dist, '404.html');
+      if (fs.existsSync(src)) {
+        fs.copyFileSync(src, dest);
+      }
+    },
+  };
+}
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    plugins: [react()],
+    base: mode === 'development' ? '/' : (env.VITE_BASE_PATH || '/finsight-frontend/'),
+    plugins: [react(), copy404Plugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
-import { TrendingUp, BarChart2, Activity, RefreshCw } from 'lucide-react';
+import { TrendingUp, BarChart2, RefreshCw } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useTheme } from '../context/ThemeContext';
 import { usePortfolioPerformance } from '../hooks/usePortfolioPerformance';

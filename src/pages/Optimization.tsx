@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
-import { Target, Play, Info, ArrowRight } from 'lucide-react';
+import { Target, Play, Info} from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useTheme } from '../context/ThemeContext';
 import { optimizationApi } from '../services/api';

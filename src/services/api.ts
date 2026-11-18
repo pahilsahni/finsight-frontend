@@ -21,7 +21,13 @@ import type {
   Period,
 } from '../types';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const defaultApiUrl = import.meta.env.PROD
+  ? 'https://finsight-backend-ezde.onrender.com'
+  : 'http://localhost:8000';
+
+export const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL || defaultApiUrl
+).replace(/\/$/, '');
 
 export async function getAuthToken(): Promise<string | null> {
   try {

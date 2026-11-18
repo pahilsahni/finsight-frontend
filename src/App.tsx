@@ -59,11 +59,13 @@ const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) 
 };
 
 export const App: React.FC = () => {
+  const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || undefined;
+
   return (
     <ThemeProvider>
       <AuthProvider>
         <PortfolioProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={basename}>
             <Routes>
               {/* Public Auth Routes */}
               <Route element={<AuthLayout />}>

@@ -12,7 +12,6 @@ import {
   LogOut,
   Menu,
   X,
-  Plus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePortfolio } from '../context/PortfolioContext';

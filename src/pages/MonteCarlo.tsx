@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
-import { Activity, Play, AlertCircle, Info, TrendingDown, TrendingUp } from 'lucide-react';
+import { Activity, Play, Info } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useTheme } from '../context/ThemeContext';
 import { simulationApi } from '../services/api';
-import { formatCurrency, formatPercent, formatPercentRaw } from '../utils/formatters';
+import { formatCurrency, formatPercent } from '../utils/formatters';
 import { getPlotlyLayout, getPlotlyConfig, CHART_COLORS } from '../utils/chartTheme';
 import { MetricCard } from '../components/common/MetricCard';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';

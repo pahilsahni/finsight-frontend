@@ -3,26 +3,23 @@ import {
   Plus,
   Upload,
   Trash2,
-  Edit2,
   Download,
   CheckCircle2,
   AlertCircle,
   FileSpreadsheet,
   X,
-  Search,
 } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useHoldings } from '../hooks/useHoldings';
 import { useApi } from '../hooks/useApi';
-import { portfolioApi, marketApi } from '../services/api';
+import { portfolioApi } from '../services/api';
 import { formatCurrency, formatPercent, formatDate, getReturnColor } from '../utils/formatters';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorMessage } from '../components/common/ErrorMessage';
-import { EmptyState } from '../components/common/EmptyState';
-import type { Holding, HoldingCreate, ImportPreview, TransactionCreate } from '../types';
+import type { ImportPreview } from '../types';
 
 export const Portfolio: React.FC = () => {
-  const { portfolios, selectedPortfolio, selectPortfolioById, deletePortfolio } = usePortfolio();
+  const { portfolios, selectedPortfolio, selectPortfolioById } = usePortfolio();
   const {
     data: holdings,
     loading: holdingsLoading,
@@ -65,7 +62,7 @@ export const Portfolio: React.FC = () => {
   const [txSubmitting, setTxSubmitting] = useState(false);
 
   // File import state
-  const [importFile, setImportFile] = useState<File | null>(null);
+  const [, setImportFile] = useState<File | null>(null);
   const [importLoading, setImportLoading] = useState(false);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [importError, setImportError] = useState<string | null>(null);

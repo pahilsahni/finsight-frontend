@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
-import { AlertTriangle, Play, RefreshCw, Info, ArrowDownRight } from 'lucide-react';
+import { AlertTriangle, Play, Info } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { useTheme } from '../context/ThemeContext';
 import { stressApi } from '../services/api';
@@ -78,7 +78,7 @@ export const StressTest: React.FC = () => {
     ? [
         {
           x: result.scenarios.map((s) => s.scenario_name),
-          y: result.scenarios.map((s) => result.portfolio_value),
+          y: result.scenarios.map(() => result.portfolio_value),
           name: 'Original Value',
           type: 'bar' as const,
           marker: { color: isDark ? '#334155' : '#94a3b8' },

@@ -163,61 +163,63 @@ export const portfolioApi = {
 // Analytics API
 // ---------------------------------------------------------------------------
 export const analyticsApi = {
-  overview: (portfolioId: string) =>
-    apiRequest<PortfolioOverview>(`/api/v1/analytics/${portfolioId}/overview`),
-  performance: (portfolioId: string, period: Period = '1y') =>
-    apiRequest<PerformanceData>(`/api/v1/analytics/${portfolioId}/performance?period=${period}`),
-  risk: (portfolioId: string, confidenceLevel = 0.95, riskFreeRate = 0.065) =>
-    apiRequest<RiskMetrics>(
+  overview: async (portfolioId: string): Promise<PortfolioOverview> => {
+    const raw = await apiRequest<any>(`/api/v1/analytics/${portfolioId}/overview`);
+    const summary = raw.summary || {};
+    const risk = raw.risk_metrics || {};
+    return {
+      total_value: summary.current_value ?? 0,
+      total_invested: summary.total_invested ?? 0,
+      pnl: summary.unrealised_pnl ?? 0,
+      pnl_pct: summary.return_pct ?? 0,
+      volatility: risk.volatility?.annualized ?? 0,
+      var_95: risk.var?.var_95 ?? 0,
+      sharpe_ratio: risk.sharpe_ratio ?? 0,
+      max_drawdown: risk.max_drawdown?.max_drawdown ?? 0,
+      beta: risk.beta ?? 1,
+    };
+  },
+  performance: async (portfolioId: string, period: Period = '1y'): Promise<PerformanceData> => {
+    const raw = await apiRequest<any>(`/api/v1/analytics/${portfolioId}/performance?period=${period}`);
+    const portfolio = raw.portfolio_cumulative || {};
+    const benchmark = raw.benchmark_cumulative || {};
+    const dates = Object.keys(portfolio).sort();
+    return {
+      dates,
+      portfolio_values: dates.map((date) => 100 * (1 + portfolio[date])),
+      benchmark_values: dates.map((date) => 100 * (1 + (benchmark[date] ?? 0))),
+      daily_returns: dates.map((date, index) => index === 0 ? 0 :
+        (portfolio[date] - portfolio[dates[index - 1]]) / (1 + portfolio[dates[index - 1]])),
+    };
+  },
+  risk: async (portfolioId: string, confidenceLevel = 0.95, riskFreeRate = 0.065): Promise<RiskMetrics> => {
+    const raw = await apiRequest<any>(
       `/api/v1/analytics/${portfolioId}/risk?confidence_level=${confidenceLevel}&risk_free_rate=${riskFreeRate}`
-    ),
-  correlation: (portfolioId: string, period: Period = '1y') =>
-    apiRequest<CorrelationData>(`/api/v1/analytics/${portfolioId}/correlation?period=${period}`),
-  riskContribution: (portfolioId: string) =>
-    apiRequest<RiskContribution>(`/api/v1/analytics/${portfolioId}/risk-contribution`),
-};
-
-// ---------------------------------------------------------------------------
-// Simulation API
-// ---------------------------------------------------------------------------
-export const simulationApi = {
-  monteCarlo: (
-    portfolioId: string,
-    params: { n_simulations?: number; n_days?: number; loss_threshold_pct?: number } = {}
-  ) =>
-    apiRequest<MonteCarloResult>(`/api/v1/simulation/${portfolioId}/monte-carlo`, {
-      method: 'POST',
-      body: JSON.stringify(params),
-    }),
-};
-
-// ---------------------------------------------------------------------------
-// Optimization API
-// ---------------------------------------------------------------------------
-export const optimizationApi = {
-  optimize: (portfolioId: string, params: { risk_free_rate?: number; n_points?: number } = {}) =>
-    apiRequest<OptimizationResult>(`/api/v1/optimization/${portfolioId}`, {
-      method: 'POST',
-      body: JSON.stringify(params),
-    }),
-};
-
-// ---------------------------------------------------------------------------
-// Stress Testing API
-// ---------------------------------------------------------------------------
-export const stressApi = {
-  test: (
-    portfolioId: string,
-    params: {
-      scenarios?: string[];
-      uniform_shock?: number;
-      custom_shocks?: Record<string, number>;
-    } = {}
-  ) =>
-    apiRequest<StressTestResult>(`/api/v1/stress-test/${portfolioId}`, {
-      method: 'POST',
-      body: JSON.stringify(params),
-    }),
+    );
+    const metrics = raw.risk_metrics || {};
+    const vars = raw.var_metrics || {};
+    return {
+      var_90: vars.var_90 ?? metrics.var?.var_90 ?? 0,
+      var_95: vars.var_95 ?? metrics.var?.var_95 ?? 0,
+      var_99: vars.var_99 ?? metrics.var?.var_99 ?? 0,
+      cvar_95: metrics.cvar_95 ?? 0,
+      volatility_daily: metrics.volatility?.daily ?? 0,
+      volatility_annual: metrics.volatility?.annualized ?? 0,
+      sharpe_ratio: raw.sharpe_ratio ?? metrics.sharpe_ratio ?? 0,
+      beta: metrics.beta ?? 1,
+      max_drawdown: metrics.max_drawdown?.max_drawdown ?? 0,
+    };
+  },
+  correlation: async (portfolioId: string, period: Period = '1y'): Promise<CorrelationData> => {
+    const raw = await apiRequest<any>(`/api/v1/analytics/${portfolioId}/correlation?period=${period}`);
+    const result = raw.correlation_matrix || {};
+    return { matrix: result.matrix ?? result, symbols: raw.symbols ?? result.symbols ?? [] };
+  },
+  riskContribution: async (portfolioId: string): Promise<RiskContribution> => {
+    const raw = await apiRequest<any>(`/api/v1/analytics/${portfolioId}/risk-contribution`);
+    const contribution = raw.risk_contribution || {};
+    return { symbols: raw.symbols ?? contribution.symbols ?? [], marginal: contribution.marginal ?? [], component: contribution.component ?? [], percent: contribution.percent ?? [] };
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -247,4 +249,27 @@ export const reportsApi = {
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   },
+};export const simulationApi = {
+  monteCarlo: async (
+    portfolioId: string,
+    params: { n_simulations?: number; n_days?: number; loss_threshold_pct?: number } = {}
+  ): Promise<MonteCarloResult> => {
+    const raw = await apiRequest<any>(`/api/v1/simulation/${portfolioId}/monte-carlo`, {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+    return raw.results as MonteCarloResult;
+  },
 };
+
+export const optimizationApi = {
+  optimize: async (portfolioId: string, params: { risk_free_rate?: number; n_points?: number } = {}): Promise<OptimizationResult> => {
+    const raw = await apiRequest<any>(`/api/v1/optimization/${portfolioId}`, {
+      method: 'POST',
+      body: JSON.stringify(params),
+    });
+    return raw.optimization as OptimizationResult;
+  },
+};
+
+

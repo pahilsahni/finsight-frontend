@@ -233,6 +233,13 @@ export const marketApi = {
 };
 
 // ---------------------------------------------------------------------------
+export const stressApi = {
+  test: (portfolioId: string, params: { scenarios?: string[]; uniform_shock?: number }) =>
+    apiRequest<StressTestResult>(`/api/v1/stress-test/${portfolioId}`, {
+      method: 'POST',
+      body: JSON.stringify(params),
+    }),
+};
 // Reports API
 // ---------------------------------------------------------------------------
 export const reportsApi = {

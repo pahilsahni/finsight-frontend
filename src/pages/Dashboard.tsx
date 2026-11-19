@@ -210,7 +210,7 @@ export const Dashboard: React.FC = () => {
       {overviewError && <ErrorMessage message={overviewError} onRetry={handleRefreshAll} />}
 
       {/* ---------------- Row 1: Primary Metrics ---------------- */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         <MetricCard
           label="Total Value"
           value={formatCurrency(overview?.total_value)}
@@ -250,7 +250,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* ---------------- Row 2: Secondary Risk Metrics ---------------- */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <MetricCard
           label="Value at Risk (95%)"
           value={formatCurrency(overview?.var_95)}

@@ -23,36 +23,44 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   className = '',
 }) => {
   const changeColors = {
-    positive: 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/40',
-    negative: 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/40',
-    neutral: 'text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
+    positive: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+    negative: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
+    neutral: 'text-slate-400 bg-slate-500/10 border-slate-500/20',
   };
 
   return (
     <div
-      className={`rounded-xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900 p-4 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-700 ${className}`}
+      className={`group flex min-w-0 min-h-[132px] flex-col justify-between overflow-hidden rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/80 dark:hover:border-slate-700 ${className}`}
     >
-      <div className="flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-        <span>{label}</span>
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <span className="min-w-0 text-xs font-medium leading-5 text-slate-500 dark:text-slate-400">
+          {label}
+        </span>
         {tooltip && (
-          <span title={tooltip} className="cursor-help text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
-            <HelpCircle className="w-3.5 h-3.5" />
+          <span
+            title={tooltip}
+            className="shrink-0 cursor-help text-slate-400 transition-colors hover:text-blue-500"
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
           </span>
         )}
       </div>
 
-      <div className="mt-2 flex items-baseline justify-between gap-2">
+      <div className="mt-4 min-w-0">
         {loading ? (
-          <div className="h-7 w-28 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+          <div className="h-7 w-3/4 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
         ) : (
-          <div className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 font-mono">
+          <div
+            className="min-w-0 text-[clamp(0.9rem,1.15vw,1.25rem)] font-bold leading-tight tracking-tight text-slate-900 dark:text-slate-100 font-mono [overflow-wrap:anywhere] tabular-nums"
+            title={String(value)}
+          >
             {value}
           </div>
         )}
 
-        {change && (
+        {change && !loading && (
           <span
-            className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold font-mono border ${changeColors[changeType]}`}
+            className={`mt-2 inline-flex max-w-full items-center rounded-md border px-2 py-1 text-[11px] font-semibold leading-tight font-mono ${changeColors[changeType]}`}
           >
             {change}
           </span>
@@ -60,7 +68,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       </div>
 
       {subtitle && (
-        <div className="mt-1 text-xs text-slate-400 dark:text-slate-500 truncate">
+        <div className="mt-2 truncate text-[11px] text-slate-400 dark:text-slate-500">
           {subtitle}
         </div>
       )}

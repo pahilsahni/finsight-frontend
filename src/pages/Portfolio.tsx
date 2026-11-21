@@ -373,7 +373,7 @@ export const Portfolio: React.FC = () => {
                         {pnl !== null ? formatCurrency(pnl) : '—'}
                         {pnlPct !== null && (
                           <span className="block text-[10px] font-normal">
-                            {pnl >= 0 ? '+' : ''}{formatPercent(pnlPct)}
+                            {pnlPct >= 0 ? '+' : ''}{formatPercent(pnlPct)}
                           </span>
                         )}
                       </td>

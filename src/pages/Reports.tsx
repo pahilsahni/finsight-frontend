@@ -140,7 +140,7 @@ export const Reports: React.FC = () => {
             <span className="text-[11px] font-sans text-slate-400 block mb-1">Unrealized P&L</span>
             <span
               className={`text-base font-bold ${
-                (overview?.pnl || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                overview?.pnl == null ? 'text-slate-500 dark:text-slate-400' : overview.pnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
               }`}
             >
               {overview?.pnl == null ? '—' : `${formatCurrency(overview.pnl)} (${formatPercentRaw(overview.pnl_pct)})`}
@@ -155,7 +155,7 @@ export const Reports: React.FC = () => {
         </div>
       </div>
 
-      {!overview?.valuation_complete && (
+      {overview && !overview.valuation_complete && (
         <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20 p-3 text-xs text-amber-800 dark:text-amber-300">
           Portfolio valuation is incomplete. Current market prices are unavailable for: {(overview?.unpriced_symbols ?? []).join(', ') || 'one or more holdings'}. Unavailable values are shown as — rather than estimated from purchase prices.
         </div>

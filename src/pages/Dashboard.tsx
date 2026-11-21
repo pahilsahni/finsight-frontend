@@ -205,7 +205,7 @@ export const Dashboard: React.FC = () => {
         <MetricCard
           label="Unrealized P&L"
           value={overview?.pnl == null ? '—' : formatCurrency(overview.pnl)}
-          change={overview?.pnl_pct == null ? undefined : `${overview.pnl >= 0 ? '+' : ''}${formatPercentRaw(overview.pnl_pct)}`}
+          change={overview?.pnl_pct == null ? undefined : `${overview.pnl_pct >= 0 ? '+' : ''}${formatPercentRaw(overview.pnl_pct)}`}
           changeType={overview?.pnl == null ? 'neutral' : overview.pnl >= 0 ? 'positive' : 'negative'}
           loading={overviewLoading}
         />
@@ -390,7 +390,7 @@ export const Dashboard: React.FC = () => {
                       <td className={`py-2.5 text-right font-semibold ${getReturnColor(pnl)}`}>
                         {pnl == null ? '—' : formatCurrency(pnl)}
                         <span className="block text-[10px] font-normal">
-                          {pnlPct == null ? '—' : `${pnl >= 0 ? '+' : ''}${formatPercent(pnlPct)}`}
+                          {pnlPct == null ? '—' : `${pnlPct >= 0 ? '+' : ''}${formatPercent(pnlPct)}`}
                         </span>
                       </td>
                     </tr>

@@ -52,7 +52,8 @@ export interface Holding {
   pnl_pct?: number | null;
   price_available?: boolean;
   price_as_of?: string | null;
-  weight?: number;
+  weight?: number | null;
+  invested_amount?: number;
 }
 
 export interface HoldingCreate {
@@ -96,10 +97,12 @@ export interface TransactionCreate {
 // =========================================================
 
 export interface PortfolioOverview {
-  total_value: number;
+  total_value: number | null;
   total_invested: number;
-  pnl: number;
-  pnl_pct: number;
+  pnl: number | null;
+  pnl_pct: number | null;
+  valuation_complete: boolean;
+  unpriced_symbols: string[];
   volatility: number;
   var_95: number;
   sharpe_ratio: number;

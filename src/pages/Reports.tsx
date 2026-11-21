@@ -155,10 +155,20 @@ export const Reports: React.FC = () => {
         </div>
       </div>
 
-      {overview && !overview.valuation_complete && (
-        <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20 p-3 text-xs text-amber-800 dark:text-amber-300">
-          Portfolio valuation is incomplete. Current market prices are unavailable for: {(overview?.unpriced_symbols ?? []).join(', ') || 'one or more holdings'}. Unavailable values are shown as — rather than estimated from purchase prices.
-        </div>
+      {!holdingsLoading && (
+        (() => {
+          const unpricedSymbols = overview?.unpriced_symbols?.length
+            ? overview.unpriced_symbols
+            : holdings.filter((holding) => holding.price_available === false).map((holding) => holding.symbol);
+          const valuationIncomplete = overview
+            ? !overview.valuation_complete
+            : unpricedSymbols.length > 0;
+          return valuationIncomplete ? (
+            <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20 p-3 text-xs text-amber-800 dark:text-amber-300">
+              Portfolio valuation is incomplete. Current market prices are unavailable for: {unpricedSymbols.join(', ') || 'one or more holdings'}. Unavailable values are shown as — rather than estimated from purchase prices.
+            </div>
+          ) : null;
+        })()
       )}
 
       {/* ---------------- Holdings Snapshot Table ---------------- */}

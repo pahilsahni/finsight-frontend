@@ -170,10 +170,12 @@ export const analyticsApi = {
     const summary = raw.summary || {};
     const risk = raw.risk_metrics || {};
     return {
-      total_value: summary.current_value ?? 0,
+      total_value: summary.current_value ?? null,
       total_invested: summary.total_invested ?? 0,
-      pnl: summary.unrealised_pnl ?? 0,
-      pnl_pct: summary.return_pct ?? 0,
+      pnl: summary.unrealised_pnl ?? null,
+      pnl_pct: summary.return_pct ?? null,
+      valuation_complete: summary.valuation_complete ?? false,
+      unpriced_symbols: summary.unpriced_symbols ?? [],
       volatility: risk.volatility?.annualized ?? 0,
       var_95: risk.var?.var_95 ?? 0,
       sharpe_ratio: risk.sharpe_ratio ?? 0,

@@ -269,7 +269,7 @@ export const Dashboard: React.FC = () => {
                 Performance vs NIFTY 50
               </h3>
               <p className="text-[11px] text-slate-400">
-                Cumulative historical portfolio value vs benchmark ({period.toUpperCase()})
+                Cumulative historical portfolio value vs benchmark (1Y)
               </p>
             </div>
             <TrendingUp className="w-4 h-4 text-slate-400" />
@@ -290,7 +290,7 @@ export const Dashboard: React.FC = () => {
               />
             ) : (
               <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                Market price history unavailable for selected period.
+                Market price history unavailable for the 1Y period.
               </div>
             )}
           </div>

@@ -7,7 +7,7 @@ export function useHoldings(portfolioId: string | undefined) {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchHoldings = useCallback(async () => {
+  const fetchHoldings = useCallback(async (forceRefresh = false) => {
     if (!portfolioId) {
       setData([]);
       return;
@@ -15,7 +15,7 @@ export function useHoldings(portfolioId: string | undefined) {
     setLoading(true);
     setError(null);
     try {
-      const res = await portfolioApi.getHoldings(portfolioId);
+      const res = await portfolioApi.getHoldings(portfolioId, forceRefresh);
       setData(res);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to fetch holdings');

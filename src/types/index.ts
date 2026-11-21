@@ -46,10 +46,12 @@ export interface Holding {
   exchange: string;
   quantity: number;
   average_buy_price: number;
-  current_price?: number;
-  current_value?: number;
-  pnl?: number;
-  pnl_pct?: number;
+  current_price?: number | null;
+  current_value?: number | null;
+  pnl?: number | null;
+  pnl_pct?: number | null;
+  price_available?: boolean;
+  price_as_of?: string | null;
   weight?: number;
 }
 

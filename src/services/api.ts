@@ -105,8 +105,10 @@ export const portfolioApi = {
       method: 'DELETE',
     }),
 
-  getHoldings: (portfolioId: string) =>
-    apiRequest<Holding[]>(`/api/v1/portfolios/${portfolioId}/holdings`),
+  getHoldings: (portfolioId: string, refresh = false) =>
+    apiRequest<Holding[]>(
+      `/api/v1/portfolios/${portfolioId}/holdings${refresh ? '?refresh=true' : ''}`
+    ),
   addHolding: (portfolioId: string, data: HoldingCreate) =>
     apiRequest<Holding>(`/api/v1/portfolios/${portfolioId}/holdings`, {
       method: 'POST',

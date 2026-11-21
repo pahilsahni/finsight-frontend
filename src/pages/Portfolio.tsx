@@ -4,6 +4,7 @@ import {
   Upload,
   Trash2,
   Download,
+  RefreshCw,
   CheckCircle2,
   AlertCircle,
   FileSpreadsheet,
@@ -244,16 +245,27 @@ export const Portfolio: React.FC = () => {
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               Holdings ({holdings.length})
             </h3>
-            <p className="text-[11px] text-slate-400">Current positions in this portfolio</p>
+            <p className="text-[11px] text-slate-400">Latest available market quotes (may be delayed)</p>
           </div>
 
-          <button
-            onClick={() => portfolioApi.downloadSampleCsv(selectedPortfolio?.id || '')}
-            className="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 font-medium"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Sample CSV Template
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => refetchHoldings(true)}
+              disabled={holdingsLoading || holdings.length === 0}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 disabled:opacity-50 flex items-center gap-1 font-medium"
+              title="Fetch the latest available market prices"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${holdingsLoading ? 'animate-spin' : ''}`} />
+              Refresh Prices
+            </button>
+            <button
+              onClick={() => portfolioApi.downloadSampleCsv(selectedPortfolio?.id || '')}
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 font-medium"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Sample CSV Template
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -281,11 +293,11 @@ export const Portfolio: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
                 {holdings.map((h) => {
-                  const current = h.current_price || h.average_buy_price;
+                  const current = typeof h.current_price === 'number' ? h.current_price : null;
                   const invested = h.quantity * h.average_buy_price;
-                  const currentVal = h.quantity * current;
-                  const pnl = currentVal - invested;
-                  const pnlPct = invested > 0 ? (pnl / invested) : 0;
+                  const currentVal = current !== null ? h.quantity * current : null;
+                  const pnl = currentVal !== null ? currentVal - invested : null;
+                  const pnlPct = pnl !== null && invested > 0 ? (pnl / invested) : null;
 
                   return (
                     <tr key={h.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
@@ -310,16 +322,23 @@ export const Portfolio: React.FC = () => {
                         {formatCurrency(invested)}
                       </td>
                       <td className="py-3 px-3 text-right text-slate-900 dark:text-slate-100 font-semibold">
-                        {formatCurrency(current)}
+                        {current !== null ? formatCurrency(current) : 'Unavailable'}
+                        {current !== null && h.price_as_of && (
+                          <span className="block text-[10px] font-normal text-slate-400">
+                            Fetched {new Date(h.price_as_of).toLocaleTimeString()}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-right text-slate-900 dark:text-slate-100 font-semibold">
-                        {formatCurrency(currentVal)}
+                        {currentVal !== null ? formatCurrency(currentVal) : '—'}
                       </td>
-                      <td className={`py-3 px-3 text-right font-bold ${getReturnColor(pnl)}`}>
-                        {formatCurrency(pnl)}
-                        <span className="block text-[10px] font-normal">
-                          {pnl >= 0 ? '+' : ''}{formatPercent(pnlPct)}
-                        </span>
+                      <td className={`py-3 px-3 text-right font-bold ${pnl !== null ? getReturnColor(pnl) : 'text-slate-400'}`}>
+                        {pnl !== null ? formatCurrency(pnl) : '—'}
+                        {pnlPct !== null && (
+                          <span className="block text-[10px] font-normal">
+                            {pnl >= 0 ? '+' : ''}{formatPercent(pnlPct)}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-center">
                         <button

@@ -17,6 +17,13 @@ export const Reports: React.FC = () => {
   const [downloadingJson, setDownloadingJson] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
+  const unpricedSymbols = overview?.unpriced_symbols?.length
+    ? overview.unpriced_symbols
+    : holdings.filter((holding) => holding.price_available === false).map((holding) => holding.symbol);
+  const valuationIncomplete = overview
+    ? !overview.valuation_complete
+    : unpricedSymbols.length > 0;
+
   const handleDownloadCsv = async () => {
     if (!selectedPortfolio) return;
     setDownloadingCsv(true);
@@ -155,20 +162,10 @@ export const Reports: React.FC = () => {
         </div>
       </div>
 
-      {!holdingsLoading && (
-        (() => {
-          const unpricedSymbols = overview?.unpriced_symbols?.length
-            ? overview.unpriced_symbols
-            : holdings.filter((holding) => holding.price_available === false).map((holding) => holding.symbol);
-          const valuationIncomplete = overview
-            ? !overview.valuation_complete
-            : unpricedSymbols.length > 0;
-          return valuationIncomplete ? (
-            <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20 p-3 text-xs text-amber-800 dark:text-amber-300">
-              Portfolio valuation is incomplete. Current market prices are unavailable for: {unpricedSymbols.join(', ') || 'one or more holdings'}. Unavailable values are shown as — rather than estimated from purchase prices.
-            </div>
-          ) : null;
-        })()
+      {!holdingsLoading && valuationIncomplete && (
+        <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20 p-3 text-xs text-amber-800 dark:text-amber-300">
+          Portfolio valuation is incomplete. Current market prices are unavailable for: {unpricedSymbols.join(', ') || 'one or more holdings'}. Unavailable values are shown as — rather than estimated from purchase prices.
+        </div>
       )}
 
       {/* ---------------- Holdings Snapshot Table ---------------- */}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Plot from 'react-plotly.js';
 import { RefreshCw, ArrowUpRight, TrendingUp, Briefcase, Plus } from 'lucide-react';
@@ -9,21 +9,18 @@ import { usePortfolioPerformance } from '../hooks/usePortfolioPerformance';
 import { useHoldings } from '../hooks/useHoldings';
 import { useApi } from '../hooks/useApi';
 import { portfolioApi } from '../services/api';
-import { formatCurrency, formatPercent, formatNumber, formatDate, getReturnColor } from '../utils/formatters';
+import { formatCurrency, formatPercent, formatPercentRaw, formatNumber, formatDate, getReturnColor } from '../utils/formatters';
 import { getPlotlyLayout, getPlotlyConfig, CHART_COLORS } from '../utils/chartTheme';
 import { MetricCard } from '../components/common/MetricCard';
 import { EmptyState } from '../components/common/EmptyState';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { ErrorMessage } from '../components/common/ErrorMessage';
-import type { Period } from '../types';
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const { selectedPortfolio, portfolios } = usePortfolio();
-
-  const [period, setPeriod] = useState<Period>('1y');
 
   const {
     data: overview,
@@ -36,7 +33,7 @@ export const Dashboard: React.FC = () => {
     data: performance,
     loading: perfLoading,
     refetch: refetchPerf,
-  } = usePortfolioPerformance(selectedPortfolio?.id, period);
+  } = usePortfolioPerformance(selectedPortfolio?.id, '1y');
 
   const {
     data: holdings,
@@ -128,23 +125,24 @@ export const Dashboard: React.FC = () => {
       ]
     : [];
 
-  // Asset allocation pie data
+  // Asset allocation is shown only when every holding has a current market value.
+  const valuationComplete = holdings.length > 0 && holdings.every(
+    (holding) => holding.price_available === true && holding.current_value != null
+  );
   const sortedHoldings = [...holdings].sort(
-    (a, b) =>
-      (b.quantity * (b.current_price || b.average_buy_price)) -
-      (a.quantity * (a.current_price || a.average_buy_price))
+    (a, b) => (b.current_value ?? 0) - (a.current_value ?? 0)
   );
 
   const top7 = sortedHoldings.slice(0, 7);
   const remaining = sortedHoldings.slice(7);
   const remainingValue = remaining.reduce(
-    (acc, h) => acc + h.quantity * (h.current_price || h.average_buy_price),
+    (acc, holding) => acc + (holding.current_value ?? 0),
     0
   );
 
-  const pieLabels = top7.map((h) => h.symbol);
-  const pieValues = top7.map((h) => h.quantity * (h.current_price || h.average_buy_price));
-  if (remainingValue > 0) {
+  const pieLabels = valuationComplete ? top7.map((holding) => holding.symbol) : [];
+  const pieValues = valuationComplete ? top7.map((holding) => holding.current_value ?? 0) : [];
+  if (valuationComplete && remainingValue > 0) {
     pieLabels.push('Others');
     pieValues.push(remainingValue);
   }
@@ -180,23 +178,6 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Period Selector */}
-          <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-800 p-0.5 bg-white dark:bg-slate-900 shadow-xs">
-            {(['1m', '3m', '6m', '1y', '2y', '3y'] as Period[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-md uppercase transition-colors ${
-                  period === p
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-
           <button
             onClick={handleRefreshAll}
             title="Refresh analytics"
@@ -213,7 +194,7 @@ export const Dashboard: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         <MetricCard
           label="Total Value"
-          value={formatCurrency(overview?.total_value)}
+          value={overview?.total_value == null ? '—' : formatCurrency(overview.total_value)}
           loading={overviewLoading}
         />
         <MetricCard
@@ -223,15 +204,15 @@ export const Dashboard: React.FC = () => {
         />
         <MetricCard
           label="Unrealized P&L"
-          value={formatCurrency(overview?.pnl)}
-          change={overview ? `${overview.pnl >= 0 ? '+' : ''}${formatPercent(overview.pnl_pct)}` : undefined}
-          changeType={overview ? (overview.pnl >= 0 ? 'positive' : 'negative') : 'neutral'}
+          value={overview?.pnl == null ? '—' : formatCurrency(overview.pnl)}
+          change={overview?.pnl_pct == null ? undefined : `${overview.pnl >= 0 ? '+' : ''}${formatPercentRaw(overview.pnl_pct)}`}
+          changeType={overview?.pnl == null ? 'neutral' : overview.pnl >= 0 ? 'positive' : 'negative'}
           loading={overviewLoading}
         />
         <MetricCard
           label="Overall Return"
-          value={formatPercent(overview?.pnl_pct)}
-          changeType={overview ? (overview.pnl >= 0 ? 'positive' : 'negative') : 'neutral'}
+          value={overview?.pnl_pct == null ? '—' : formatPercentRaw(overview.pnl_pct)}
+          changeType={overview?.pnl == null ? 'neutral' : overview.pnl >= 0 ? 'positive' : 'negative'}
           loading={overviewLoading}
         />
         <MetricCard
@@ -342,7 +323,7 @@ export const Dashboard: React.FC = () => {
               />
             ) : (
               <div className="h-full flex items-center justify-center text-xs text-slate-400">
-                No holdings data.
+                {valuationComplete ? 'No holdings data.' : 'Allocation unavailable until all market prices are available.'}
               </div>
             )}
           </div>
@@ -380,11 +361,11 @@ export const Dashboard: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
                 {holdings.slice(0, 8).map((h) => {
-                  const currentPrice = h.current_price || h.average_buy_price;
-                  const value = h.quantity * currentPrice;
+                  const currentPrice = h.current_price ?? null;
+                  const value = h.current_value ?? null;
                   const invested = h.quantity * h.average_buy_price;
-                  const pnl = value - invested;
-                  const pnlPct = invested > 0 ? (pnl / invested) : 0;
+                  const pnl = h.pnl ?? null;
+                  const pnlPct = invested > 0 && pnl !== null ? (pnl / invested) : null;
 
                   return (
                     <tr key={h.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
@@ -401,15 +382,15 @@ export const Dashboard: React.FC = () => {
                         {formatCurrency(h.average_buy_price)}
                       </td>
                       <td className="py-2.5 text-right text-slate-900 dark:text-slate-100 font-semibold">
-                        {formatCurrency(currentPrice)}
+                        {currentPrice == null ? '—' : formatCurrency(currentPrice)}
                       </td>
                       <td className="py-2.5 text-right text-slate-900 dark:text-slate-100">
-                        {formatCurrency(value)}
+                        {value == null ? '—' : formatCurrency(value)}
                       </td>
                       <td className={`py-2.5 text-right font-semibold ${getReturnColor(pnl)}`}>
-                        {formatCurrency(pnl)}
+                        {pnl == null ? '—' : formatCurrency(pnl)}
                         <span className="block text-[10px] font-normal">
-                          {pnl >= 0 ? '+' : ''}{formatPercent(pnlPct)}
+                          {pnlPct == null ? '—' : `${pnl >= 0 ? '+' : ''}${formatPercent(pnlPct)}`}
                         </span>
                       </td>
                     </tr>

@@ -4,7 +4,7 @@ import { usePortfolio } from '../context/PortfolioContext';
 import { usePortfolioOverview } from '../hooks/usePortfolioOverview';
 import { useHoldings } from '../hooks/useHoldings';
 import { reportsApi } from '../services/api';
-import { formatCurrency, formatPercent, formatDate } from '../utils/formatters';
+import { formatCurrency, formatPercentRaw, formatDate } from '../utils/formatters';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { EmptyState } from '../components/common/EmptyState';
 
@@ -16,6 +16,13 @@ export const Reports: React.FC = () => {
   const [downloadingCsv, setDownloadingCsv] = useState(false);
   const [downloadingJson, setDownloadingJson] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const unpricedSymbols = overview?.unpriced_symbols?.length
+    ? overview.unpriced_symbols
+    : holdings.filter((holding) => holding.price_available === false).map((holding) => holding.symbol);
+  const valuationIncomplete = overview
+    ? !overview.valuation_complete
+    : unpricedSymbols.length > 0;
 
   const handleDownloadCsv = async () => {
     if (!selectedPortfolio) return;
@@ -127,7 +134,7 @@ export const Reports: React.FC = () => {
           <div>
             <span className="text-[11px] font-sans text-slate-400 block mb-1">Total Valuation</span>
             <span className="text-base font-bold text-slate-900 dark:text-slate-100">
-              {formatCurrency(overview?.total_value)}
+              {overview?.total_value == null ? '—' : formatCurrency(overview.total_value)}
             </span>
           </div>
           <div>
@@ -140,10 +147,10 @@ export const Reports: React.FC = () => {
             <span className="text-[11px] font-sans text-slate-400 block mb-1">Unrealized P&L</span>
             <span
               className={`text-base font-bold ${
-                (overview?.pnl || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                overview?.pnl == null ? 'text-slate-500 dark:text-slate-400' : overview.pnl >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
               }`}
             >
-              {formatCurrency(overview?.pnl)} ({formatPercent(overview?.pnl_pct)})
+              {overview?.pnl == null ? '—' : `${formatCurrency(overview.pnl)} (${formatPercentRaw(overview.pnl_pct)})`}
             </span>
           </div>
           <div>
@@ -154,6 +161,12 @@ export const Reports: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {!holdingsLoading && valuationIncomplete && (
+        <div className="rounded-lg border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20 p-3 text-xs text-amber-800 dark:text-amber-300">
+          Portfolio valuation is incomplete. Current market prices are unavailable for: {unpricedSymbols.join(', ') || 'one or more holdings'}. Unavailable values are shown as — rather than estimated from purchase prices.
+        </div>
+      )}
 
       {/* ---------------- Holdings Snapshot Table ---------------- */}
       <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden">
@@ -183,7 +196,7 @@ export const Reports: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {holdings.map((h) => {
-                  const currentPrice = h.current_price || h.average_buy_price;
+                  const currentPrice = h.current_price ?? null;
                   return (
                     <tr key={h.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
                       <td className="py-2.5 px-4 font-sans font-bold text-slate-900 dark:text-slate-100">
@@ -192,9 +205,9 @@ export const Reports: React.FC = () => {
                       <td className="py-2.5 px-3 text-slate-500">{h.exchange}</td>
                       <td className="py-2.5 px-3 text-right">{h.quantity}</td>
                       <td className="py-2.5 px-3 text-right">{formatCurrency(h.average_buy_price)}</td>
-                      <td className="py-2.5 px-3 text-right">{formatCurrency(currentPrice)}</td>
+                      <td className="py-2.5 px-3 text-right">{currentPrice == null ? '—' : formatCurrency(currentPrice)}</td>
                       <td className="py-2.5 px-4 text-right font-bold text-slate-900 dark:text-slate-100">
-                        {formatCurrency(h.quantity * currentPrice)}
+                        {h.current_value == null ? '—' : formatCurrency(h.current_value)}
                       </td>
                     </tr>
                   );

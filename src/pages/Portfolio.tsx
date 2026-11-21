@@ -4,6 +4,7 @@ import {
   Upload,
   Trash2,
   Download,
+  RefreshCw,
   CheckCircle2,
   AlertCircle,
   FileSpreadsheet,
@@ -19,7 +20,7 @@ import { ErrorMessage } from '../components/common/ErrorMessage';
 import type { ImportPreview } from '../types';
 
 export const Portfolio: React.FC = () => {
-  const { portfolios, selectedPortfolio, selectPortfolioById } = usePortfolio();
+  const { portfolios, selectedPortfolio, selectPortfolioById, deletePortfolio } = usePortfolio();
   const {
     data: holdings,
     loading: holdingsLoading,
@@ -43,6 +44,7 @@ export const Portfolio: React.FC = () => {
   const [showAddHolding, setShowAddHolding] = useState(false);
   const [showAddTx, setShowAddTx] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [deletingPortfolioId, setDeletingPortfolioId] = useState<string | null>(null);
 
   // Add Holding form state
   const [symbol, setSymbol] = useState('');
@@ -96,6 +98,23 @@ export const Portfolio: React.FC = () => {
       setHoldingFormError(err instanceof Error ? err.message : 'Failed to add holding');
     } finally {
       setHoldingSubmitting(false);
+    }
+  };
+
+  // Delete Portfolio
+  const handleDeletePortfolio = async (portfolioId: string, portfolioName: string) => {
+    const confirmed = window.confirm(
+      `Delete "${portfolioName}"? This permanently deletes the portfolio and all its holdings and transaction history. This action cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setDeletingPortfolioId(portfolioId);
+    try {
+      await deletePortfolio(portfolioId);
+    } catch (err: unknown) {
+      window.alert(err instanceof Error ? err.message : 'Failed to delete portfolio');
+    } finally {
+      setDeletingPortfolioId(null);
     }
   };
 
@@ -219,13 +238,32 @@ export const Portfolio: React.FC = () => {
                   : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
               }`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
                   {p.name}
                 </span>
-                {selectedPortfolio?.id === p.id && (
-                  <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400" />
-                )}
+                <div className="flex shrink-0 items-center gap-2">
+                  {selectedPortfolio?.id === p.id && (
+                    <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-blue-400" />
+                  )}
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleDeletePortfolio(p.id, p.name);
+                    }}
+                    disabled={deletingPortfolioId !== null}
+                    aria-label={`Delete portfolio ${p.name}`}
+                    title="Delete portfolio and its holdings and transactions"
+                    className="rounded-md p-1 text-slate-400 transition-colors hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+                  >
+                    {deletingPortfolioId === p.id ? (
+                      <span className="block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
               </div>
               <p className="mt-1 text-[11px] text-slate-400 truncate">
                 {p.description || 'Indian Equity Portfolio'}
@@ -244,16 +282,27 @@ export const Portfolio: React.FC = () => {
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
               Holdings ({holdings.length})
             </h3>
-            <p className="text-[11px] text-slate-400">Current positions in this portfolio</p>
+            <p className="text-[11px] text-slate-400">Latest available market quotes (may be delayed)</p>
           </div>
 
-          <button
-            onClick={() => portfolioApi.downloadSampleCsv(selectedPortfolio?.id || '')}
-            className="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 font-medium"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Sample CSV Template
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => refetchHoldings(true)}
+              disabled={holdingsLoading || holdings.length === 0}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 disabled:opacity-50 flex items-center gap-1 font-medium"
+              title="Fetch the latest available market prices"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${holdingsLoading ? 'animate-spin' : ''}`} />
+              Refresh Prices
+            </button>
+            <button
+              onClick={() => portfolioApi.downloadSampleCsv(selectedPortfolio?.id || '')}
+              className="text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center gap-1 font-medium"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Sample CSV Template
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -281,11 +330,11 @@ export const Portfolio: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
                 {holdings.map((h) => {
-                  const current = h.current_price || h.average_buy_price;
+                  const current = typeof h.current_price === 'number' ? h.current_price : null;
                   const invested = h.quantity * h.average_buy_price;
-                  const currentVal = h.quantity * current;
-                  const pnl = currentVal - invested;
-                  const pnlPct = invested > 0 ? (pnl / invested) : 0;
+                  const currentVal = current !== null ? h.quantity * current : null;
+                  const pnl = currentVal !== null ? currentVal - invested : null;
+                  const pnlPct = pnl !== null && invested > 0 ? (pnl / invested) : null;
 
                   return (
                     <tr key={h.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
@@ -310,16 +359,23 @@ export const Portfolio: React.FC = () => {
                         {formatCurrency(invested)}
                       </td>
                       <td className="py-3 px-3 text-right text-slate-900 dark:text-slate-100 font-semibold">
-                        {formatCurrency(current)}
+                        {current !== null ? formatCurrency(current) : 'Unavailable'}
+                        {current !== null && h.price_as_of && (
+                          <span className="block text-[10px] font-normal text-slate-400">
+                            Fetched {new Date(h.price_as_of).toLocaleTimeString()}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-right text-slate-900 dark:text-slate-100 font-semibold">
-                        {formatCurrency(currentVal)}
+                        {currentVal !== null ? formatCurrency(currentVal) : '—'}
                       </td>
-                      <td className={`py-3 px-3 text-right font-bold ${getReturnColor(pnl)}`}>
-                        {formatCurrency(pnl)}
-                        <span className="block text-[10px] font-normal">
-                          {pnl >= 0 ? '+' : ''}{formatPercent(pnlPct)}
-                        </span>
+                      <td className={`py-3 px-3 text-right font-bold ${pnl !== null ? getReturnColor(pnl) : 'text-slate-400'}`}>
+                        {pnl !== null ? formatCurrency(pnl) : '—'}
+                        {pnlPct !== null && (
+                          <span className="block text-[10px] font-normal">
+                            {pnlPct >= 0 ? '+' : ''}{formatPercent(pnlPct)}
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4 text-center">
                         <button

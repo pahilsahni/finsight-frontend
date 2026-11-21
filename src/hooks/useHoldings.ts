@@ -26,7 +26,16 @@ export function useHoldings(portfolioId: string | undefined) {
 
   useEffect(() => {
     fetchHoldings();
-  }, [fetchHoldings]);
+    if (!portfolioId) return;
+
+    // Refresh the latest available quote every five minutes while this page
+    // is open. The backend cache prevents excessive provider requests.
+    const intervalId = window.setInterval(() => {
+      fetchHoldings();
+    }, 5 * 60 * 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [fetchHoldings, portfolioId]);
 
   return { data, loading, error, refetch: fetchHoldings };
 }
